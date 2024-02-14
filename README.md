@@ -28,7 +28,6 @@ Predictors: Other columns containing features for analysis.
 
 3.1 Import Libraries and Load Dataset-It Consist of libraries installation & Data fetching
 Details are as follow:
-# Import necessary libraries
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -37,91 +36,84 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
 
-#Collect the time series data from the CSV file linked here.
-data= pd.read_csv("C:/Users/admin/Downloads/Anoma_data.csv")
+data = pd.read_csv("C:/Users/admin/Downloads/data.csv")
+
+
+
 
 3.2 Exploratory Data Analysis (EDA)- It Consist of data quality checks, handling of missing values, and explored data distribution.
 
-# Display basic statistics
+# Exploratory Data Analysis (EDA)
+# Show Data quality check, treat missing values, outliers, etc.
+print(data.info())
 print(data.describe())
-# Check for missing values
-print(data.isnull().sum())
-
-# Visualize data distribution
-sns.countplot(data['y'])
-plt.show()
-
-# Explore relationships between predictors and target variable
-sns.pairplot(data, hue='y')
-plt.show()
-
 
 
 3.3 Data Cleaning- It Consist of managing the missing values and standardize the data
 
-# Handle missing values
-data.fillna(data.mean(), inplace=True)
+# Drop missing values
+data = data.dropna()
 
-# Handle outliers (you can use various techniques)
-# For example, using Z-score
-from scipy.stats import zscore
-z_scores = zscore(data.drop('y', axis=1))
-data_no_outliers = data [(z_scores < 3).all(axis=1)]
 
-# Check the effect on the dataset
-print("Original data shape:", data.shape)
-print("Data shape after handling outliers:", data_no_outliers.shape)
+
+
 
 3.4 Feature Engineering- It consist of data type changing and extraction of addition features
+# For simplicity, we'll just drop the 'date' column for now
+data = data.drop('date', axis=1)
+# Convert date column to datetime type
+Anoma_data ['date'] = pd.to_datetime(Anoma_data ['date'])
 
-# Get the correct datatype for date
-data['date'] = pd.to_datetime(data['date'])
 
 3.5 Train/Test Split- It consist of application of sampling distribution to find the best split
+
 # Train/Test Split
-X = data.drop(['y', 'date'], axis=1)  # Exclude 'date' column
+X = data.drop('y', axis=1)
 y = data['y']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-
-
-
-3.5 Model Selection, Training, and Assessment- It Consist of evaluated model performance on unseen data
-# Choose a model (Random Forest selected as below)
+3.6 Model Selection, Training, and Assessment- It Consist of evaluated model performance on unseen data
 model = RandomForestClassifier(random_state=42)
 
+3.7 Hyperparameter Tuning- It Consist of Hyper parameter tuning using GridSearchCV
+param_grid = {
+    'n_estimators': [50, 100, 200],
+    'max_depth': [None, 10, 20],
+    'min_samples_split': [2, 5, 10],
+}
+
+grid_search = GridSearchCV(model, param_grid, cv=5, scoring='accuracy')
+grid_search.fit(X_train, y_train)
+best_model = grid_search.best_estimator_
+
+3.8 Model Validation
+
 # Model Training
-model.fit(X_train, y_train)
-# Predictions on the test set
-y_pred = model.predict(X_test)
-# Model Assessment
+best_model.fit(X_train, y_train)
+
+
+# Model Prediction
+y_pred = best_model.predict(X_test)
+# Model Evaluation
 accuracy = accuracy_score(y_test, y_pred)
 print(f'Accuracy: {accuracy * 100:.2f}%')
-
-3.6 Hyperparameter Tuning- It Consist of Hyper parameter tuning using GridSearchCV
-# using GridSearchCV for hyperparameter tuning
-param_grid = {'n_estimators': [50, 100, 200], 'max_depth': [None, 10, 20]}
-grid_search = GridSearchCV(model, param_grid, cv=5)
-grid_search.fit(X_train, y_train)
-
-best_model = grid_search.best_estimator_
-best_model.fit(X_train, y_train)
-best_y_pred = best_model.predict(X_test)
-
-# Model Assessment after tuning
-best_accuracy = accuracy_score(y_test, best_y_pred)
-print(f'Best Model Accuracy: {best_accuracy * 100:.2f}%')
+print(classification_report(y_test, y_pred))
 
 
+3.9 Model Deployment Plan
 
 
+pipeline = Pipeline([
+    ('scaler', StandardScaler()),
+    ('classifier', best_model)
+])
+
+pipeline.fit(X_train, y_train)
 
 
-3.7 Model Deployment Plan
-import joblib
-joblib.dump(best_model, 'anomaly_detection_model.pkl')
-
-
-
-
+# Save the model and pipeline
+from joblib import dump
+dump(pipeline, 'anomaly_detection_model.joblib')
