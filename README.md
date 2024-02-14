@@ -61,16 +61,16 @@ plt.show()
 3.3 Data Cleaning- It Consist of managing the missing values and standardize the data
 
 # Handle missing values
-Anoma_data.fillna(Anoma_data.mean(), inplace=True)
+data.fillna(data.mean(), inplace=True)
 
 # Handle outliers (you can use various techniques)
 # For example, using Z-score
 from scipy.stats import zscore
-z_scores = zscore(Anoma_data.drop('y', axis=1))
-data_no_outliers = Anoma_data [(z_scores < 3).all(axis=1)]
+z_scores = zscore(data.drop('y', axis=1))
+data_no_outliers = data [(z_scores < 3).all(axis=1)]
 
 # Check the effect on the dataset
-print("Original data shape:", Anoma_data.shape)
+print("Original data shape:", data.shape)
 print("Data shape after handling outliers:", data_no_outliers.shape)
 
 3.4 Feature Engineering- It consist of data type changing and extraction of addition features
@@ -121,6 +121,7 @@ print(f'Best Model Accuracy: {best_accuracy * 100:.2f}%')
 3.7 Model Deployment Plan
 import joblib
 joblib.dump(best_model, 'anomaly_detection_model.pkl')
+
 
 
 
